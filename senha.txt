@@ -1,4 +1,0 @@
-sac01 = 123456
-sac02 = 252563
-qualidade01 = 357896
-qualidade02 = 458231

@@ -4,6 +4,24 @@ import numpy as np
 from fpdf import FPDF
 from datetime import datetime
 import base64
+import os
+import tempfile
+from dotenv import load_dotenv
+
+# =========================================================
+# CARREGAR SENHAS
+# =========================================================
+
+load_dotenv("senha.env")
+
+USUARIOS = {
+
+    "sac01": str(os.getenv("SAC01", "")).strip(),
+    "sac02": str(os.getenv("SAC02", "")).strip(),
+    "qualidade01": str(os.getenv("QUALIDADE01", "")).strip(),
+    "qualidade02": str(os.getenv("QUALIDADE02", "")).strip()
+
+}
 
 # =========================================================
 # CONFIG
@@ -16,40 +34,7 @@ st.set_page_config(
 )
 
 # =========================================================
-# CARREGAR USUÁRIOS
-# =========================================================
-
-def carregar_usuarios():
-
-    usuarios = {}
-
-    try:
-
-        with open("senha.txt", "r", encoding="utf-8") as arquivo:
-
-            linhas = arquivo.readlines()
-
-            for linha in linhas:
-
-                if "=" in linha:
-
-                    usuario, senha = linha.split("=")
-
-                    usuario = usuario.strip()
-                    senha = senha.strip()
-
-                    usuarios[usuario] = senha
-
-    except Exception as erro:
-
-        st.error(f"Erro ao carregar senha.txt: {erro}")
-
-    return usuarios
-
-USUARIOS = carregar_usuarios()
-
-# =========================================================
-# SESSION LOGIN
+# SESSION
 # =========================================================
 
 if "logado" not in st.session_state:
@@ -97,8 +82,6 @@ st.markdown("""
 
 }
 
-/* CONTAINER */
-
 .block-container{
 
     padding-top:1rem;
@@ -117,8 +100,8 @@ st.markdown("""
 
     width:100%;
 
-    margin-top:-10px;
-    margin-bottom:-10px;
+    margin-top:0px;
+    margin-bottom:10px;
 
 }
 
@@ -134,6 +117,22 @@ st.markdown("""
     filter:
         drop-shadow(0 0 10px #00AEEF)
         drop-shadow(0 0 25px rgba(0,174,239,0.5));
+
+}
+
+/* LOGIN */
+
+.login-box{
+
+    background:rgba(255,255,255,0.05);
+
+    padding:35px;
+
+    border-radius:20px;
+
+    border:1px solid rgba(255,255,255,0.08);
+
+    margin-top:50px;
 
 }
 
@@ -174,7 +173,7 @@ st.markdown("""
 
 }
 
-/* KPIs */
+/* KPIS */
 
 [data-testid="stMetric"]{
 
@@ -220,16 +219,6 @@ st.markdown("""
 
 }
 
-/* LINKS */
-
-a{
-
-    color:#00AEEF !important;
-    text-decoration:none !important;
-    font-weight:700;
-
-}
-
 /* CARDS */
 
 .card{
@@ -243,6 +232,14 @@ a{
     margin-bottom:12px;
 
     border:1px solid rgba(255,255,255,0.08);
+
+}
+
+a{
+
+    color:#00AEEF !important;
+    text-decoration:none !important;
+    font-weight:700;
 
 }
 
@@ -289,9 +286,13 @@ a{
 
 if not st.session_state.logado:
 
-    col1, col2, col3 = st.columns([1,2,1])
+    col1, col2, col3 = st.columns([1,1.5,1])
 
     with col2:
+
+        st.markdown("""
+        <div class="login-box">
+        """, unsafe_allow_html=True)
 
         st.markdown(f"""
         <div class="logo-container">
@@ -309,9 +310,7 @@ if not st.session_state.logado:
         </div>
         """, unsafe_allow_html=True)
 
-        usuario = st.text_input(
-            "👤 Usuário"
-        )
+        usuario = st.text_input("👤 Usuário")
 
         senha = st.text_input(
             "🔒 Senha",
@@ -320,7 +319,12 @@ if not st.session_state.logado:
 
         if st.button("🚀 ENTRAR"):
 
-            if usuario in USUARIOS and USUARIOS[usuario] == senha:
+            usuario = usuario.strip().lower()
+            senha = senha.strip()
+
+            senha_correta = USUARIOS.get(usuario)
+
+            if senha_correta and senha == senha_correta:
 
                 st.session_state.logado = True
                 st.session_state.usuario = usuario
@@ -332,6 +336,8 @@ if not st.session_state.logado:
             else:
 
                 st.error("❌ Usuário ou senha inválidos!")
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
 
@@ -391,14 +397,10 @@ if arquivo:
 
     try:
 
-        # LEITURA
-
         df = pd.read_excel(
             arquivo,
             sheet_name="cini"
         )
-
-        # COLUNAS
 
         colunas = [
 
@@ -466,7 +468,7 @@ if arquivo:
 
         )
 
-        # MAPS
+        # GOOGLE MAPS
 
         df["GOOGLE MAPS"] = (
 
@@ -536,9 +538,7 @@ if arquivo:
 
         st.divider()
 
-        # =====================================================
         # ROTAS
-        # =====================================================
 
         st.subheader("🗺️ Rotas de Coleta")
 
@@ -581,15 +581,7 @@ if arquivo:
 
             <br>
 
-            <a href="{str(row['GOOGLE MAPS'])}" target="_blank"
-            style="
-                background:#00AEEF;
-                color:white;
-                padding:10px 18px;
-                border-radius:10px;
-                text-decoration:none;
-                font-weight:700;
-            ">
+            <a href="{str(row['GOOGLE MAPS'])}" target="_blank">
                 🗺️ Abrir Google Maps
             </a>
 
@@ -598,9 +590,7 @@ if arquivo:
 
         st.divider()
 
-        # =====================================================
         # PDF
-        # =====================================================
 
         st.subheader("📄 Exportação PDF")
 
@@ -624,264 +614,61 @@ if arquivo:
 
                     pdf.add_page()
 
-                    pdf.set_fill_color(10,16,32)
-
-                    pdf.rect(
-                        0,
-                        0,
-                        210,
-                        32,
-                        'F'
-                    )
-
-                    pdf.set_text_color(255,255,255)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        22
-                    )
-
-                    pdf.set_xy(12,9)
+                    pdf.set_font("Arial", "B", 18)
 
                     pdf.cell(
                         0,
                         10,
-                        "COLETA SAC CINI"
+                        "COLETA SAC CINI",
+                        ln=True
                     )
 
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        10
-                    )
+                    pdf.ln(10)
 
-                    pdf.set_xy(12,20)
-
-                    pdf.cell(
-                        0,
-                        10,
-                        "Relatorio operacional de coleta"
-                    )
-
-                    pdf.set_draw_color(210,210,210)
-
-                    pdf.rect(
-                        10,
-                        40,
-                        190,
-                        190
-                    )
-
-                    pdf.set_text_color(0,0,0)
-
-                    pdf.set_xy(15,50)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        13
-                    )
-
-                    pdf.cell(
-                        35,
-                        8,
-                        "Cliente:"
-                    )
-
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        13
-                    )
+                    pdf.set_font("Arial", "", 12)
 
                     pdf.multi_cell(
-                        135,
-                        8,
-                        str(row["NOME DO CONSUMIDOR"])
-                    )
-
-                    pdf.set_xy(15,75)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        12
-                    )
-
-                    pdf.cell(
-                        45,
-                        8,
-                        "Produto:"
-                    )
-
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        12
-                    )
-
-                    pdf.multi_cell(
-                        120,
-                        8,
-                        str(row["PRODUTO"])
-                    )
-
-                    pdf.set_xy(15,95)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        12
-                    )
-
-                    pdf.cell(
-                        45,
-                        8,
-                        "Quantidade:"
-                    )
-
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        12
-                    )
-
-                    pdf.cell(
-                        80,
-                        8,
-                        str(row["QUANTIDADE COM DEFEITO"])
-                    )
-
-                    pdf.set_xy(15,110)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        12
-                    )
-
-                    pdf.cell(
-                        45,
-                        8,
-                        "Telefone:"
-                    )
-
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        12
-                    )
-
-                    pdf.cell(
-                        100,
-                        8,
-                        str(row["TELEFONE CONSUMIDOR"])
-                    )
-
-                    pdf.set_xy(15,125)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        12
-                    )
-
-                    pdf.cell(
-                        45,
-                        8,
-                        "Endereco:"
-                    )
-
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        12
-                    )
-
-                    pdf.multi_cell(
-                        130,
-                        8,
-                        str(row["ENDERECO_COMPLETO"])
-                    )
-
-                    pdf.set_xy(15,165)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        12
-                    )
-
-                    pdf.cell(
                         0,
                         8,
-                        "[ ] Coletado"
+                        f"""
+CLIENTE: {row['NOME DO CONSUMIDOR']}
+
+PRODUTO: {row['PRODUTO']}
+
+TELEFONE: {row['TELEFONE CONSUMIDOR']}
+
+CIDADE: {row['CIDADE']}
+
+ENDEREÇO:
+{row['ENDERECO_COMPLETO']}
+                        """
                     )
 
-                    pdf.set_xy(15,178)
+                # PDF TEMPORÁRIO
 
-                    pdf.cell(
-                        0,
-                        8,
-                        "[ ] Recebido no estabelecimento"
-                    )
+                with tempfile.NamedTemporaryFile(
+                    delete=False,
+                    suffix=".pdf"
+                ) as tmp:
 
-                    pdf.line(
-                        55,
-                        245,
-                        155,
-                        245
-                    )
+                    pdf.output(tmp.name)
 
-                    pdf.set_xy(75,248)
+                    tmp_path = tmp.name
 
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        10
-                    )
+                with open(tmp_path, "rb") as pdf_file:
 
-                    pdf.cell(
-                        60,
-                        8,
-                        "Assinatura Responsavel"
-                    )
+                    pdf_bytes = pdf_file.read()
 
-                    pdf.set_xy(10,282)
+                os.remove(tmp_path)
 
-                    pdf.set_text_color(120,120,120)
+                st.download_button(
 
-                    pdf.set_font(
-                        "Arial",
-                        "I",
-                        8
-                    )
+                    label="⬇️ DOWNLOAD PDF",
+                    data=pdf_bytes,
+                    file_name=f"coletas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                    mime="application/pdf"
 
-                    pdf.cell(
-                        190,
-                        8,
-                        f"Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')}",
-                        align="C"
-                    )
-
-                nome_pdf = (
-                    f"coletas_"
-                    f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
                 )
-
-                pdf.output(nome_pdf)
-
-                st.success("✅ PDF gerado com sucesso!")
-
-                with open(nome_pdf, "rb") as file:
-
-                    st.download_button(
-                        label="⬇️ DOWNLOAD PDF",
-                        data=file,
-                        file_name=nome_pdf,
-                        mime="application/pdf"
-                    )
 
     except Exception as erro:
 
