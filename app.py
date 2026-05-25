@@ -2,10 +2,10 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from datetime import datetime
-import base64
-import os
 from dotenv import load_dotenv
 from fpdf import FPDF
+import base64
+import os
 
 # =========================================================
 # CONFIG PAGINA
@@ -61,7 +61,9 @@ def get_base64_image(image_path):
                 img_file.read()
             ).decode()
 
-    except:
+    except Exception as e:
+
+        st.warning(f"Logo não encontrada: {e}")
 
         return ""
 
@@ -565,9 +567,9 @@ if arquivo:
                 df["ENDERECO_COMPLETO"]
                 .fillna("")
                 .astype(str)
-                .str.replace(" ", "+")
-                .str.replace(",", "")
-                .str.replace("++", "+")
+                .str.replace(",", "", regex=False)
+                .str.replace("  ", " ", regex=False)
+                .str.replace(" ", "+", regex=False)
             )
 
         )
@@ -644,6 +646,11 @@ if arquivo:
                 else "#FFD93D"
             )
 
+            telefone = str(row["TELEFONE CONSUMIDOR"])
+
+            if telefone == "nan":
+                telefone = "-"
+
             st.markdown(f"""
 
             <div class="card">
@@ -673,7 +680,7 @@ if arquivo:
                     {str(row['NOME DO ESTABELECIMENTO'])}<br>
 
                     📞 Telefone:
-                    {str(row['TELEFONE CONSUMIDOR'])}<br>
+                    {telefone}<br>
 
                 </div>
 
