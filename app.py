@@ -6,7 +6,6 @@ from datetime import datetime
 import base64
 import os
 from dotenv import load_dotenv
-from io import BytesIO
 
 # =========================================================
 # CARREGAR SENHAS
@@ -22,9 +21,6 @@ USUARIOS = {
     "qualidade02": os.getenv("QUALIDADE02", "").strip()
 
 }
-
-# DEBUG OPCIONAL
-# st.write(USUARIOS)
 
 # =========================================================
 # CONFIG
@@ -315,9 +311,7 @@ if not st.session_state.logado:
         </div>
         """, unsafe_allow_html=True)
 
-        usuario = st.text_input(
-            "👤 Usuário"
-        )
+        usuario = st.text_input("👤 Usuário")
 
         senha = st.text_input(
             "🔒 Senha",
@@ -373,8 +367,6 @@ with col2:
     """, unsafe_allow_html=True)
 
 with col3:
-
-    st.write("")
 
     if st.button("🚪 SAIR"):
 
@@ -543,7 +535,7 @@ if arquivo:
 
         st.divider()
 
-        # MAPAS
+        # ROTAS
 
         st.subheader("🗺️ Rotas de Coleta")
 
@@ -656,7 +648,11 @@ Quantidade:
                         """
                     )
 
-                pdf_bytes = pdf.output(dest='S').encode('latin1')
+                # CORREÇÃO PDF
+
+                pdf_bytes = bytes(
+                    pdf.output(dest="S")
+                )
 
                 st.download_button(
                     label="⬇️ BAIXAR PDF",
