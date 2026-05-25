@@ -4,8 +4,26 @@ import numpy as np
 from fpdf import FPDF
 from datetime import datetime
 import base64
-import tempfile
 import os
+import io
+from dotenv import load_dotenv
+
+# =========================================================
+# CARREGAR .ENV
+# =========================================================
+
+load_dotenv()
+
+# =========================================================
+# USUÁRIOS
+# =========================================================
+
+USUARIOS = {
+    "sac01": os.getenv("SAC01", "").strip(),
+    "sac02": os.getenv("SAC02", "").strip(),
+    "qualidade01": os.getenv("QUALIDADE01", "").strip(),
+    "qualidade02": os.getenv("QUALIDADE02", "").strip(),
+}
 
 # =========================================================
 # CONFIG
@@ -16,19 +34,6 @@ st.set_page_config(
     page_icon="🚚",
     layout="wide"
 )
-
-# =========================================================
-# SENHAS STREAMLIT CLOUD
-# =========================================================
-
-USUARIOS = {
-
-    "sac01": st.secrets["SAC01"],
-    "sac02": st.secrets["SAC02"],
-    "qualidade01": st.secrets["QUALIDADE01"],
-    "qualidade02": st.secrets["QUALIDADE02"]
-
-}
 
 # =========================================================
 # SESSION
@@ -104,7 +109,7 @@ st.markdown("""
 
 .logo-pulsando{
 
-    width:120px;
+    width:90px;
     height:auto;
 
     animation:
@@ -216,6 +221,16 @@ st.markdown("""
 
 }
 
+/* LINKS */
+
+a{
+
+    color:#00AEEF !important;
+    text-decoration:none !important;
+    font-weight:700;
+
+}
+
 /* CARDS */
 
 .card{
@@ -229,14 +244,6 @@ st.markdown("""
     margin-bottom:12px;
 
     border:1px solid rgba(255,255,255,0.08);
-
-}
-
-a{
-
-    color:#00AEEF !important;
-    text-decoration:none !important;
-    font-weight:700;
 
 }
 
@@ -307,7 +314,9 @@ if not st.session_state.logado:
         </div>
         """, unsafe_allow_html=True)
 
-        usuario = st.text_input("👤 Usuário")
+        usuario = st.text_input(
+            "👤 Usuário"
+        )
 
         senha = st.text_input(
             "🔒 Senha",
@@ -319,9 +328,7 @@ if not st.session_state.logado:
             usuario = usuario.strip().lower()
             senha = senha.strip()
 
-            senha_correta = USUARIOS.get(usuario)
-
-            if senha_correta and senha == senha_correta:
+            if usuario in USUARIOS and USUARIOS[usuario] == senha:
 
                 st.session_state.logado = True
                 st.session_state.usuario = usuario
@@ -365,6 +372,8 @@ with col2:
     """, unsafe_allow_html=True)
 
 with col3:
+
+    st.write("")
 
     if st.button("🚪 SAIR"):
 
@@ -576,7 +585,15 @@ if arquivo:
 
             <br>
 
-            <a href="{str(row['GOOGLE MAPS'])}" target="_blank">
+            <a href="{str(row['GOOGLE MAPS'])}" target="_blank"
+            style="
+                background:#00AEEF;
+                color:white;
+                padding:10px 18px;
+                border-radius:10px;
+                text-decoration:none;
+                font-weight:700;
+            ">
                 🗺️ Abrir Google Maps
             </a>
 
@@ -603,62 +620,200 @@ if arquivo:
 
                 pdf = FPDF()
 
+                pdf.set_auto_page_break(False)
+
                 for i, row in df_pdf.iterrows():
 
                     pdf.add_page()
 
-                    pdf.set_font("Arial", "B", 18)
+                    pdf.set_fill_color(10,16,32)
+
+                    pdf.rect(
+                        0,
+                        0,
+                        210,
+                        32,
+                        'F'
+                    )
+
+                    pdf.set_text_color(255,255,255)
+
+                    pdf.set_font(
+                        "Arial",
+                        "B",
+                        22
+                    )
+
+                    pdf.set_xy(12,9)
 
                     pdf.cell(
                         0,
                         10,
-                        "COLETA SAC CINI",
-                        ln=True
+                        "COLETA SAC CINI"
                     )
 
-                    pdf.ln(10)
+                    pdf.set_font(
+                        "Arial",
+                        "",
+                        10
+                    )
 
-                    pdf.set_font("Arial", "", 12)
+                    pdf.set_xy(12,20)
+
+                    pdf.cell(
+                        0,
+                        10,
+                        "Relatorio operacional de coleta"
+                    )
+
+                    pdf.set_draw_color(210,210,210)
+
+                    pdf.rect(
+                        10,
+                        40,
+                        190,
+                        190
+                    )
+
+                    pdf.set_text_color(0,0,0)
+
+                    pdf.set_xy(15,50)
+
+                    pdf.set_font(
+                        "Arial",
+                        "B",
+                        13
+                    )
+
+                    pdf.cell(
+                        35,
+                        8,
+                        "Cliente:"
+                    )
+
+                    pdf.set_font(
+                        "Arial",
+                        "",
+                        13
+                    )
 
                     pdf.multi_cell(
-                        0,
+                        135,
                         8,
-                        f"""
-CLIENTE: {row['NOME DO CONSUMIDOR']}
-
-PRODUTO: {row['PRODUTO']}
-
-TELEFONE: {row['TELEFONE CONSUMIDOR']}
-
-CIDADE: {row['CIDADE']}
-
-ENDEREÇO:
-{row['ENDERECO_COMPLETO']}
-                        """
+                        str(row["NOME DO CONSUMIDOR"])
                     )
 
-                with tempfile.NamedTemporaryFile(
-                    delete=False,
-                    suffix=".pdf"
-                ) as tmp:
+                    pdf.set_xy(15,75)
 
-                    pdf.output(tmp.name)
+                    pdf.set_font(
+                        "Arial",
+                        "B",
+                        12
+                    )
 
-                    tmp_path = tmp.name
+                    pdf.cell(
+                        45,
+                        8,
+                        "Produto:"
+                    )
 
-                with open(tmp_path, "rb") as pdf_file:
+                    pdf.set_font(
+                        "Arial",
+                        "",
+                        12
+                    )
 
-                    pdf_bytes = pdf_file.read()
+                    pdf.multi_cell(
+                        120,
+                        8,
+                        str(row["PRODUTO"])
+                    )
 
-                os.remove(tmp_path)
+                    pdf.set_xy(15,95)
+
+                    pdf.set_font(
+                        "Arial",
+                        "B",
+                        12
+                    )
+
+                    pdf.cell(
+                        45,
+                        8,
+                        "Quantidade:"
+                    )
+
+                    pdf.set_font(
+                        "Arial",
+                        "",
+                        12
+                    )
+
+                    pdf.cell(
+                        80,
+                        8,
+                        str(row["QUANTIDADE COM DEFEITO"])
+                    )
+
+                    pdf.set_xy(15,110)
+
+                    pdf.set_font(
+                        "Arial",
+                        "B",
+                        12
+                    )
+
+                    pdf.cell(
+                        45,
+                        8,
+                        "Telefone:"
+                    )
+
+                    pdf.set_font(
+                        "Arial",
+                        "",
+                        12
+                    )
+
+                    pdf.cell(
+                        100,
+                        8,
+                        str(row["TELEFONE CONSUMIDOR"])
+                    )
+
+                    pdf.set_xy(15,125)
+
+                    pdf.set_font(
+                        "Arial",
+                        "B",
+                        12
+                    )
+
+                    pdf.cell(
+                        45,
+                        8,
+                        "Endereco:"
+                    )
+
+                    pdf.set_font(
+                        "Arial",
+                        "",
+                        12
+                    )
+
+                    pdf.multi_cell(
+                        130,
+                        8,
+                        str(row["ENDERECO_COMPLETO"])
+                    )
+
+                pdf_bytes = pdf.output(dest='S').encode('latin-1')
 
                 st.download_button(
-
                     label="⬇️ DOWNLOAD PDF",
                     data=pdf_bytes,
                     file_name=f"coletas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
                     mime="application/pdf"
-
                 )
 
     except Exception as erro:
