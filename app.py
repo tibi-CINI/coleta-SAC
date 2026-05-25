@@ -1,11 +1,21 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from fpdf import FPDF
 from datetime import datetime
 import base64
 import os
 from dotenv import load_dotenv
+from fpdf import FPDF
+
+# =========================================================
+# CONFIG
+# =========================================================
+
+st.set_page_config(
+    page_title="Coleta SAC Cini",
+    page_icon="🚚",
+    layout="wide"
+)
 
 # =========================================================
 # CARREGAR SENHAS
@@ -23,16 +33,6 @@ USUARIOS = {
 }
 
 # =========================================================
-# CONFIG
-# =========================================================
-
-st.set_page_config(
-    page_title="Coleta SAC Cini",
-    page_icon="🚚",
-    layout="wide"
-)
-
-# =========================================================
 # SESSION
 # =========================================================
 
@@ -43,7 +43,7 @@ if "usuario" not in st.session_state:
     st.session_state.usuario = ""
 
 # =========================================================
-# LOGO
+# BASE64 LOGO
 # =========================================================
 
 def get_base64_image(image_path):
@@ -65,6 +65,7 @@ def get_base64_image(image_path):
 # =========================================================
 
 st.markdown("""
+
 <style>
 
 .stApp{
@@ -99,23 +100,21 @@ st.markdown("""
 
     width:100%;
 
-    margin-top:0px;
     margin-bottom:10px;
 
 }
 
 .logo-pulsando{
 
-    width:90px;
-    height:auto;
+    width:95px;
 
     animation:
         pulseGlow 2.5s infinite,
         floating 3s ease-in-out infinite;
 
     filter:
-        drop-shadow(0 0 10px #00AEEF)
-        drop-shadow(0 0 25px rgba(0,174,239,0.5));
+        drop-shadow(0 0 12px #00AEEF)
+        drop-shadow(0 0 25px rgba(0,174,239,0.55));
 
 }
 
@@ -125,13 +124,16 @@ st.markdown("""
 
     background:rgba(255,255,255,0.05);
 
-    padding:35px;
+    padding:40px;
 
-    border-radius:20px;
+    border-radius:24px;
 
     border:1px solid rgba(255,255,255,0.08);
 
-    margin-top:50px;
+    margin-top:60px;
+
+    box-shadow:
+        0 0 30px rgba(0,0,0,0.35);
 
 }
 
@@ -139,11 +141,10 @@ st.markdown("""
 
 .titulo{
 
-    font-size:38px;
+    font-size:42px;
     font-weight:800;
     color:white;
     text-align:center;
-    margin-top:10px;
 
 }
 
@@ -172,24 +173,6 @@ st.markdown("""
 
 }
 
-/* KPIS */
-
-[data-testid="stMetric"]{
-
-    background:rgba(255,255,255,0.05);
-
-    padding:20px;
-
-    border-radius:18px;
-
-    border:1px solid rgba(255,255,255,0.08);
-
-    box-shadow:
-        0 0 20px rgba(0,0,0,0.35),
-        inset 0 0 15px rgba(255,255,255,0.02);
-
-}
-
 /* BOTÕES */
 
 .stButton button{
@@ -200,7 +183,7 @@ st.markdown("""
 
     border:none;
 
-    border-radius:12px;
+    border-radius:14px;
 
     padding:12px 22px;
 
@@ -214,17 +197,21 @@ st.markdown("""
 
 .stButton button:hover{
 
-    background:#008FC4;
+    background:#0094D1;
 
 }
 
-/* LINKS */
+/* METRICS */
 
-a{
+[data-testid="stMetric"]{
 
-    color:#00AEEF !important;
-    text-decoration:none !important;
-    font-weight:700;
+    background:rgba(255,255,255,0.05);
+
+    padding:20px;
+
+    border-radius:18px;
+
+    border:1px solid rgba(255,255,255,0.08);
 
 }
 
@@ -234,11 +221,11 @@ a{
 
     background:rgba(255,255,255,0.05);
 
-    padding:18px;
+    padding:20px;
 
-    border-radius:18px;
+    border-radius:20px;
 
-    margin-bottom:12px;
+    margin-bottom:15px;
 
     border:1px solid rgba(255,255,255,0.08);
 
@@ -279,6 +266,7 @@ a{
 }
 
 </style>
+
 """, unsafe_allow_html=True)
 
 # =========================================================
@@ -291,17 +279,26 @@ if not st.session_state.logado:
 
     with col2:
 
-        st.markdown("""
-        <div class="login-box">
-        """, unsafe_allow_html=True)
+        st.markdown(
+            '<div class="login-box">',
+            unsafe_allow_html=True
+        )
 
         st.markdown(f"""
+
         <div class="logo-container">
-            <img src="data:image/png;base64,{get_base64_image('logo.png')}" class="logo-pulsando">
+
+            <img
+                src="data:image/png;base64,{get_base64_image('logo.png')}"
+                class="logo-pulsando"
+            >
+
         </div>
+
         """, unsafe_allow_html=True)
 
         st.markdown("""
+
         <div class='titulo'>
             🚚 COLETA SAC CINI
         </div>
@@ -309,6 +306,7 @@ if not st.session_state.logado:
         <div class='subtitulo'>
             Sistema operacional de coletas SAC
         </div>
+
         """, unsafe_allow_html=True)
 
         usuario = st.text_input("👤 Usuário")
@@ -349,14 +347,22 @@ col1, col2, col3 = st.columns([1,4,1])
 with col1:
 
     st.markdown(f"""
+
     <div class="logo-container">
-        <img src="data:image/png;base64,{get_base64_image('logo.png')}" class="logo-pulsando">
+
+        <img
+            src="data:image/png;base64,{get_base64_image('logo.png')}"
+            class="logo-pulsando"
+        >
+
     </div>
+
     """, unsafe_allow_html=True)
 
 with col2:
 
     st.markdown(f"""
+
     <div class='titulo'>
         🚚 COLETA SAC CINI
     </div>
@@ -364,6 +370,7 @@ with col2:
     <div class='subtitulo'>
         Usuário conectado: {st.session_state.usuario}
     </div>
+
     """, unsafe_allow_html=True)
 
 with col3:
@@ -385,6 +392,76 @@ arquivo = st.file_uploader(
     "📥 Importar planilha COLETA SAC",
     type=["xlsx"]
 )
+
+# =========================================================
+# CLASSE PDF
+# =========================================================
+
+class PDF(FPDF):
+
+    def header(self):
+
+        self.set_fill_color(2, 21, 43)
+
+        self.rect(
+            0,
+            0,
+            210,
+            28,
+            "F"
+        )
+
+        self.set_text_color(255,255,255)
+
+        self.set_font(
+            "Helvetica",
+            "B",
+            20
+        )
+
+        self.set_xy(15,10)
+
+        self.cell(
+            0,
+            8,
+            "COLETA SAC CINI",
+            ln=True
+        )
+
+        self.set_font(
+            "Helvetica",
+            "",
+            9
+        )
+
+        self.set_x(15)
+
+        self.cell(
+            0,
+            5,
+            "Relatorio operacional de coleta"
+        )
+
+        self.ln(20)
+
+    def footer(self):
+
+        self.set_y(-15)
+
+        self.set_font(
+            "Helvetica",
+            "I",
+            8
+        )
+
+        self.set_text_color(120,120,120)
+
+        self.cell(
+            0,
+            10,
+            f"Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')}",
+            align="C"
+        )
 
 # =========================================================
 # PROCESSAMENTO
@@ -548,54 +625,77 @@ if arquivo:
             )
 
             st.markdown(f"""
+
             <div class="card">
 
-            <div style="
-                font-size:18px;
-                font-weight:700;
-                color:white;
-                margin-bottom:8px;
-            ">
-                👤 {str(row['NOME DO CONSUMIDOR'])}
+                <div style="
+                    font-size:20px;
+                    font-weight:700;
+                    margin-bottom:10px;
+                ">
+
+                    👤 {str(row['NOME DO CONSUMIDOR'])}
+
+                </div>
+
+                <div style="
+                    color:#B7C7EA;
+                    line-height:1.8;
+                ">
+
+                    📦 Produto:
+                    {str(row['PRODUTO'])}<br>
+
+                    📍 Cidade:
+                    {str(row['CIDADE'])}<br>
+
+                    🏪 Estabelecimento:
+                    {str(row['NOME DO ESTABELECIMENTO'])}<br>
+
+                    📞 Telefone:
+                    {str(row['TELEFONE CONSUMIDOR'])}<br>
+
+                </div>
+
+                <div style="
+                    margin-top:10px;
+                    font-weight:700;
+                    color:{status_cor};
+                ">
+
+                    🚦 {str(row['STATUS'])}
+
+                </div>
+
+                <br>
+
+                <a
+                    href="{str(row['GOOGLE MAPS'])}"
+                    target="_blank"
+
+                    style="
+                        background:#00AEEF;
+                        color:white;
+                        padding:12px 18px;
+                        border-radius:12px;
+                        text-decoration:none;
+                        font-weight:700;
+                    "
+                >
+
+                    🗺️ Abrir Google Maps
+
+                </a>
+
             </div>
 
-            <div style="color:#8FA7D8;">
-
-                📦 Produto: {str(row['PRODUTO'])}<br>
-                📍 Cidade: {str(row['CIDADE'])}<br>
-                🏪 Estabelecimento: {str(row['NOME DO ESTABELECIMENTO'])}<br>
-                📞 Telefone: {str(row['TELEFONE CONSUMIDOR'])}<br>
-
-            </div>
-
-            <div style="
-                margin-top:10px;
-                font-weight:700;
-                color:{status_cor};
-            ">
-                🚦 {str(row['STATUS'])}
-            </div>
-
-            <br>
-
-            <a href="{str(row['GOOGLE MAPS'])}" target="_blank"
-            style="
-                background:#00AEEF;
-                color:white;
-                padding:10px 18px;
-                border-radius:10px;
-                text-decoration:none;
-                font-weight:700;
-            ">
-                🗺️ Abrir Google Maps
-            </a>
-
-            </div>
             """, unsafe_allow_html=True)
 
         st.divider()
 
+        # =========================================================
         # PDF
+        # =========================================================
 
         st.subheader("📄 Exportação PDF")
 
@@ -611,54 +711,144 @@ if arquivo:
 
             else:
 
-                pdf = FPDF()
+                pdf = PDF()
+
+                pdf.set_auto_page_break(
+                    auto=True,
+                    margin=20
+                )
 
                 for i, row in df_pdf.iterrows():
 
                     pdf.add_page()
 
-                    pdf.set_font("Arial", "B", 18)
+                    # BOX PRINCIPAL
+
+                    pdf.set_draw_color(220,220,220)
+
+                    pdf.rect(
+                        10,
+                        38,
+                        190,
+                        170
+                    )
+
+                    # CAMPOS
+
+                    pdf.set_text_color(25,25,25)
+
+                    pdf.set_font(
+                        "Helvetica",
+                        "B",
+                        12
+                    )
+
+                    y = 50
+
+                    campos = [
+
+                        ("Cliente:", row["NOME DO CONSUMIDOR"]),
+                        ("Produto:", row["PRODUTO"]),
+                        ("Quantidade:", str(row["QUANTIDADE COM DEFEITO"])),
+                        ("Telefone:", str(row["TELEFONE CONSUMIDOR"])),
+                        ("Endereco:", row["ENDERECO_COMPLETO"])
+
+                    ]
+
+                    for titulo, valor in campos:
+
+                        pdf.set_xy(18, y)
+
+                        pdf.cell(
+                            38,
+                            8,
+                            titulo
+                        )
+
+                        pdf.set_font(
+                            "Helvetica",
+                            "",
+                            12
+                        )
+
+                        pdf.set_xy(58, y)
+
+                        pdf.multi_cell(
+                            125,
+                            8,
+                            str(valor)
+                        )
+
+                        pdf.set_font(
+                            "Helvetica",
+                            "B",
+                            12
+                        )
+
+                        y += 18
+
+                    # CHECKBOXES
+
+                    y += 15
+
+                    pdf.set_xy(18, y)
 
                     pdf.cell(
                         0,
-                        10,
-                        "COLETA SAC CINI",
-                        ln=True
+                        8,
+                        "[ ] Coletado"
                     )
 
-                    pdf.ln(5)
+                    y += 14
 
-                    pdf.set_font("Arial", "", 12)
+                    pdf.set_xy(18, y)
 
-                    pdf.multi_cell(
+                    pdf.cell(
                         0,
                         8,
-                        f"""
-Cliente: {row['NOME DO CONSUMIDOR']}
-
-Produto: {row['PRODUTO']}
-
-Telefone: {row['TELEFONE CONSUMIDOR']}
-
-Endereco:
-{row['ENDERECO_COMPLETO']}
-
-Quantidade:
-{row['QUANTIDADE COM DEFEITO']}
-                        """
+                        "[ ] Recebido no estabelecimento"
                     )
 
-                # CORREÇÃO PDF
+                    # ASSINATURA
+
+                    y += 60
+
+                    pdf.line(
+                        60,
+                        y,
+                        150,
+                        y
+                    )
+
+                    pdf.set_font(
+                        "Helvetica",
+                        "",
+                        10
+                    )
+
+                    pdf.set_xy(70, y+2)
+
+                    pdf.cell(
+                        70,
+                        8,
+                        "Assinatura Responsavel",
+                        align="C"
+                    )
 
                 pdf_bytes = bytes(
                     pdf.output(dest="S")
                 )
 
                 st.download_button(
+
                     label="⬇️ BAIXAR PDF",
+
                     data=pdf_bytes,
+
                     file_name=f"coletas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+
                     mime="application/pdf"
+
                 )
 
     except Exception as erro:
