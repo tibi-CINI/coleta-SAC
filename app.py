@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from fpdf import FPDF
 
 # =========================================================
-# CONFIG
+# CONFIG PAGINA
 # =========================================================
 
 st.set_page_config(
@@ -43,20 +43,27 @@ if "usuario" not in st.session_state:
     st.session_state.usuario = ""
 
 # =========================================================
-# BASE64 LOGO
+# FUNÇÃO LOGO
 # =========================================================
 
 def get_base64_image(image_path):
 
     try:
 
-        with open(image_path, "rb") as img_file:
+        caminho_absoluto = os.path.join(
+            os.path.dirname(__file__),
+            image_path
+        )
+
+        with open(caminho_absoluto, "rb") as img_file:
 
             return base64.b64encode(
                 img_file.read()
             ).decode()
 
-    except:
+    except Exception as e:
+
+        st.error(f"Erro carregando logo: {e}")
 
         return ""
 
@@ -107,6 +114,7 @@ st.markdown("""
 .logo-pulsando{
 
     width:95px;
+    height:auto;
 
     animation:
         pulseGlow 2.5s infinite,
@@ -201,7 +209,7 @@ st.markdown("""
 
 }
 
-/* METRICS */
+/* KPIS */
 
 [data-testid="stMetric"]{
 
@@ -228,6 +236,15 @@ st.markdown("""
     margin-bottom:15px;
 
     border:1px solid rgba(255,255,255,0.08);
+
+}
+
+/* TABELA */
+
+[data-testid="stDataFrame"]{
+
+    border-radius:18px;
+    overflow:hidden;
 
 }
 
@@ -284,18 +301,22 @@ if not st.session_state.logado:
             unsafe_allow_html=True
         )
 
-        st.markdown(f"""
+        logo_base64 = get_base64_image("logo.png")
 
-        <div class="logo-container">
+        if logo_base64:
 
-            <img
-                src="data:image/png;base64,{get_base64_image('logo.png')}"
-                class="logo-pulsando"
-            >
+            st.markdown(f"""
 
-        </div>
+            <div class="logo-container">
 
-        """, unsafe_allow_html=True)
+                <img
+                    src="data:image/png;base64,{logo_base64}"
+                    class="logo-pulsando"
+                >
+
+            </div>
+
+            """, unsafe_allow_html=True)
 
         st.markdown("""
 
@@ -346,18 +367,22 @@ col1, col2, col3 = st.columns([1,4,1])
 
 with col1:
 
-    st.markdown(f"""
+    logo_base64 = get_base64_image("logo.png")
 
-    <div class="logo-container">
+    if logo_base64:
 
-        <img
-            src="data:image/png;base64,{get_base64_image('logo.png')}"
-            class="logo-pulsando"
-        >
+        st.markdown(f"""
 
-    </div>
+        <div class="logo-container">
 
-    """, unsafe_allow_html=True)
+            <img
+                src="data:image/png;base64,{logo_base64}"
+                class="logo-pulsando"
+            >
+
+        </div>
+
+        """, unsafe_allow_html=True)
 
 with col2:
 
@@ -385,7 +410,7 @@ with col3:
 st.divider()
 
 # =========================================================
-# IMPORTAÇÃO
+# UPLOAD
 # =========================================================
 
 arquivo = st.file_uploader(
@@ -407,9 +432,25 @@ class PDF(FPDF):
             0,
             0,
             210,
-            28,
+            30,
             "F"
         )
+
+        # LOGO PDF
+
+        caminho_logo = os.path.join(
+            os.path.dirname(__file__),
+            "logo.png"
+        )
+
+        if os.path.exists(caminho_logo):
+
+            self.image(
+                caminho_logo,
+                x=12,
+                y=6,
+                w=16
+            )
 
         self.set_text_color(255,255,255)
 
@@ -419,7 +460,7 @@ class PDF(FPDF):
             20
         )
 
-        self.set_xy(15,10)
+        self.set_xy(34,8)
 
         self.cell(
             0,
@@ -434,7 +475,7 @@ class PDF(FPDF):
             9
         )
 
-        self.set_x(15)
+        self.set_x(34)
 
         self.cell(
             0,
@@ -442,7 +483,7 @@ class PDF(FPDF):
             "Relatorio operacional de coleta"
         )
 
-        self.ln(20)
+        self.ln(22)
 
     def footer(self):
 
@@ -531,7 +572,7 @@ if arquivo:
 
         )
 
-        # ENDEREÇO
+        # ENDEREÇO COMPLETO
 
         df["ENDERECO_COMPLETO"] = (
 
@@ -612,7 +653,7 @@ if arquivo:
 
         st.divider()
 
-        # ROTAS
+        # CARDS
 
         st.subheader("🗺️ Rotas de Coleta")
 
@@ -693,9 +734,7 @@ if arquivo:
 
         st.divider()
 
-        # =========================================================
         # PDF
-        # =========================================================
 
         st.subheader("📄 Exportação PDF")
 
@@ -722,8 +761,6 @@ if arquivo:
 
                     pdf.add_page()
 
-                    # BOX PRINCIPAL
-
                     pdf.set_draw_color(220,220,220)
 
                     pdf.rect(
@@ -732,8 +769,6 @@ if arquivo:
                         190,
                         170
                     )
-
-                    # CAMPOS
 
                     pdf.set_text_color(25,25,25)
 
@@ -787,8 +822,6 @@ if arquivo:
 
                         y += 18
 
-                    # CHECKBOXES
-
                     y += 15
 
                     pdf.set_xy(18, y)
@@ -808,8 +841,6 @@ if arquivo:
                         8,
                         "[ ] Recebido no estabelecimento"
                     )
-
-                    # ASSINATURA
 
                     y += 60
 
