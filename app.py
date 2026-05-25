@@ -5,24 +5,21 @@ from fpdf import FPDF
 from datetime import datetime
 import base64
 import os
-import io
 from dotenv import load_dotenv
 
 # =========================================================
-# CARREGAR .ENV
+# CARREGAR SENHAS
 # =========================================================
 
-load_dotenv()
-
-# =========================================================
-# USUÁRIOS
-# =========================================================
+load_dotenv("senha.env")
 
 USUARIOS = {
+
     "sac01": os.getenv("SAC01", "").strip(),
     "sac02": os.getenv("SAC02", "").strip(),
     "qualidade01": os.getenv("QUALIDADE01", "").strip(),
-    "qualidade02": os.getenv("QUALIDADE02", "").strip(),
+    "qualidade02": os.getenv("QUALIDADE02", "").strip()
+
 }
 
 # =========================================================
@@ -30,9 +27,11 @@ USUARIOS = {
 # =========================================================
 
 st.set_page_config(
+
     page_title="Coleta SAC Cini",
     page_icon="🚚",
     layout="wide"
+
 )
 
 # =========================================================
@@ -92,6 +91,22 @@ st.markdown("""
 
 }
 
+/* LOGIN */
+
+.login-box{
+
+    background:rgba(255,255,255,0.05);
+
+    padding:40px;
+
+    border-radius:24px;
+
+    border:1px solid rgba(255,255,255,0.08);
+
+    margin-top:40px;
+
+}
+
 /* LOGO */
 
 .logo-container{
@@ -102,14 +117,11 @@ st.markdown("""
 
     width:100%;
 
-    margin-top:0px;
-    margin-bottom:10px;
-
 }
 
 .logo-pulsando{
 
-    width:90px;
+    width:120px;
     height:auto;
 
     animation:
@@ -122,31 +134,15 @@ st.markdown("""
 
 }
 
-/* LOGIN */
-
-.login-box{
-
-    background:rgba(255,255,255,0.05);
-
-    padding:35px;
-
-    border-radius:20px;
-
-    border:1px solid rgba(255,255,255,0.08);
-
-    margin-top:50px;
-
-}
-
 /* TITULOS */
 
 .titulo{
 
-    font-size:38px;
+    font-size:40px;
     font-weight:800;
     color:white;
     text-align:center;
-    margin-top:10px;
+    margin-top:15px;
 
 }
 
@@ -155,7 +151,7 @@ st.markdown("""
     color:#8FA7D8;
     font-size:15px;
     text-align:center;
-    margin-bottom:20px;
+    margin-bottom:25px;
 
 }
 
@@ -172,24 +168,6 @@ st.markdown("""
     border:1px solid rgba(255,255,255,0.10);
 
     padding:12px;
-
-}
-
-/* KPIS */
-
-[data-testid="stMetric"]{
-
-    background:rgba(255,255,255,0.05);
-
-    padding:20px;
-
-    border-radius:18px;
-
-    border:1px solid rgba(255,255,255,0.08);
-
-    box-shadow:
-        0 0 20px rgba(0,0,0,0.35),
-        inset 0 0 15px rgba(255,255,255,0.02);
 
 }
 
@@ -221,17 +199,21 @@ st.markdown("""
 
 }
 
-/* LINKS */
+/* KPI */
 
-a{
+[data-testid="stMetric"]{
 
-    color:#00AEEF !important;
-    text-decoration:none !important;
-    font-weight:700;
+    background:rgba(255,255,255,0.05);
+
+    padding:20px;
+
+    border-radius:18px;
+
+    border:1px solid rgba(255,255,255,0.08);
 
 }
 
-/* CARDS */
+/* CARD */
 
 .card{
 
@@ -247,7 +229,14 @@ a{
 
 }
 
-/* ANIMAÇÕES */
+/* LINKS */
+
+a{
+
+    color:white !important;
+    text-decoration:none !important;
+
+}
 
 @keyframes pulseGlow {
 
@@ -328,7 +317,9 @@ if not st.session_state.logado:
             usuario = usuario.strip().lower()
             senha = senha.strip()
 
-            if usuario in USUARIOS and USUARIOS[usuario] == senha:
+            senha_correta = USUARIOS.get(usuario)
+
+            if senha_correta and senha == senha_correta:
 
                 st.session_state.logado = True
                 st.session_state.usuario = usuario
@@ -373,8 +364,6 @@ with col2:
 
 with col3:
 
-    st.write("")
-
     if st.button("🚪 SAIR"):
 
         st.session_state.logado = False
@@ -385,12 +374,14 @@ with col3:
 st.divider()
 
 # =========================================================
-# IMPORTAÇÃO
+# IMPORTAR PLANILHA
 # =========================================================
 
 arquivo = st.file_uploader(
+
     "📥 Importar planilha COLETA SAC",
     type=["xlsx"]
+
 )
 
 # =========================================================
@@ -435,18 +426,6 @@ if arquivo:
 
         ]
 
-        faltando = [
-
-            c for c in colunas
-            if c not in df.columns
-
-        ]
-
-        if faltando:
-
-            st.error(f"❌ Colunas não encontradas: {faltando}")
-            st.stop()
-
         df = df[colunas]
 
         # STATUS
@@ -465,10 +444,10 @@ if arquivo:
 
         df["ENDERECO_COMPLETO"] = (
 
-            df["ENDEREÇO"].fillna('').astype(str) + ", " +
-            df["BAIRRO"].fillna('').astype(str) + ", " +
-            df["CIDADE"].fillna('').astype(str) + " - " +
-            df["ESTADO"].fillna('').astype(str)
+            df["ENDEREÇO"].fillna("").astype(str) + ", " +
+            df["BAIRRO"].fillna("").astype(str) + ", " +
+            df["CIDADE"].fillna("").astype(str) + " - " +
+            df["ESTADO"].fillna("").astype(str)
 
         )
 
@@ -478,11 +457,11 @@ if arquivo:
 
             "https://www.google.com/maps/search/?api=1&query="
             +
-            df["ENDERECO_COMPLETO"].astype(str).str.replace(" ", "+")
+            df["ENDERECO_COMPLETO"].str.replace(" ", "+")
 
         )
 
-        # KPIS
+        # KPI
 
         total = len(df)
 
@@ -508,8 +487,16 @@ if arquivo:
         # FILTROS
 
         cidades_filtro = st.multiselect(
+
             "🏙️ Filtrar cidade",
-            sorted(df["CIDADE"].dropna().astype(str).unique())
+
+            sorted(
+                df["CIDADE"]
+                .dropna()
+                .astype(str)
+                .unique()
+            )
+
         )
 
         if cidades_filtro:
@@ -519,9 +506,13 @@ if arquivo:
             ]
 
         status_filtro = st.multiselect(
-            "🚦 Filtrar Status",
+
+            "🚦 Filtrar status",
+
             ["AGUARDANDO", "COLETADO"],
+
             default=["AGUARDANDO", "COLETADO"]
+
         )
 
         df = df[
@@ -535,9 +526,13 @@ if arquivo:
         st.subheader("📋 Lista de Coletas")
 
         st.dataframe(
+
             df,
+
             use_container_width=True,
+
             height=500
+
         )
 
         st.divider()
@@ -546,7 +541,7 @@ if arquivo:
 
         st.subheader("🗺️ Rotas de Coleta")
 
-        for i, row in df.iterrows():
+        for _, row in df.iterrows():
 
             status_cor = (
                 "#00FF9D"
@@ -557,45 +552,44 @@ if arquivo:
             st.markdown(f"""
             <div class="card">
 
-            <div style="
-                font-size:18px;
-                font-weight:700;
-                color:white;
-                margin-bottom:8px;
-            ">
-                👤 {str(row['NOME DO CONSUMIDOR'])}
-            </div>
+                <div style="
+                    font-size:18px;
+                    font-weight:700;
+                    color:white;
+                    margin-bottom:8px;
+                ">
+                    👤 {row['NOME DO CONSUMIDOR']}
+                </div>
 
-            <div style="color:#8FA7D8;">
+                <div style="color:#8FA7D8;">
 
-                📦 Produto: {str(row['PRODUTO'])}<br>
-                📍 Cidade: {str(row['CIDADE'])}<br>
-                🏪 Estabelecimento: {str(row['NOME DO ESTABELECIMENTO'])}<br>
-                📞 Telefone: {str(row['TELEFONE CONSUMIDOR'])}<br>
+                    📦 Produto: {row['PRODUTO']}<br>
+                    📍 Cidade: {row['CIDADE']}<br>
+                    🏪 Estabelecimento: {row['NOME DO ESTABELECIMENTO']}<br>
+                    📞 Telefone: {row['TELEFONE CONSUMIDOR']}<br>
 
-            </div>
+                </div>
 
-            <div style="
-                margin-top:10px;
-                font-weight:700;
-                color:{status_cor};
-            ">
-                🚦 {str(row['STATUS'])}
-            </div>
+                <div style="
+                    margin-top:10px;
+                    font-weight:700;
+                    color:{status_cor};
+                ">
+                    🚦 {row['STATUS']}
+                </div>
 
-            <br>
+                <br>
 
-            <a href="{str(row['GOOGLE MAPS'])}" target="_blank"
-            style="
-                background:#00AEEF;
-                color:white;
-                padding:10px 18px;
-                border-radius:10px;
-                text-decoration:none;
-                font-weight:700;
-            ">
-                🗺️ Abrir Google Maps
-            </a>
+                <a href="{row['GOOGLE MAPS']}" target="_blank"
+                style="
+                    background:#00AEEF;
+                    padding:10px 18px;
+                    border-radius:10px;
+                    color:white;
+                    font-weight:700;
+                ">
+                    🗺️ Abrir Google Maps
+                </a>
 
             </div>
             """, unsafe_allow_html=True)
@@ -606,216 +600,54 @@ if arquivo:
 
         st.subheader("📄 Exportação PDF")
 
-        if st.button("📄 GERAR PDF DE PENDÊNCIAS"):
+        if st.button("📄 GERAR PDF"):
 
-            df_pdf = df[
-                df["STATUS"] == "AGUARDANDO"
-            ]
+            pdf = FPDF()
 
-            if len(df_pdf) == 0:
+            pdf.add_page()
 
-                st.warning("⚠️ Não existem pendências.")
+            pdf.set_font("Arial", "B", 16)
 
-            else:
+            pdf.cell(190, 10, "COLETA SAC CINI", 0, 1, "C")
 
-                pdf = FPDF()
+            pdf.ln(10)
 
-                pdf.set_auto_page_break(False)
+            pdf.set_font("Arial", "", 10)
 
-                for i, row in df_pdf.iterrows():
+            for _, row in df.iterrows():
 
-                    pdf.add_page()
+                pdf.multi_cell(
 
-                    pdf.set_fill_color(10,16,32)
+                    0,
+                    8,
 
-                    pdf.rect(
-                        0,
-                        0,
-                        210,
-                        32,
-                        'F'
-                    )
+                    f"""
+Cliente: {row['NOME DO CONSUMIDOR']}
+Produto: {row['PRODUTO']}
+Cidade: {row['CIDADE']}
+Telefone: {row['TELEFONE CONSUMIDOR']}
+Status: {row['STATUS']}
+Endereco: {row['ENDERECO_COMPLETO']}
+                    """
 
-                    pdf.set_text_color(255,255,255)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        22
-                    )
-
-                    pdf.set_xy(12,9)
-
-                    pdf.cell(
-                        0,
-                        10,
-                        "COLETA SAC CINI"
-                    )
-
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        10
-                    )
-
-                    pdf.set_xy(12,20)
-
-                    pdf.cell(
-                        0,
-                        10,
-                        "Relatorio operacional de coleta"
-                    )
-
-                    pdf.set_draw_color(210,210,210)
-
-                    pdf.rect(
-                        10,
-                        40,
-                        190,
-                        190
-                    )
-
-                    pdf.set_text_color(0,0,0)
-
-                    pdf.set_xy(15,50)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        13
-                    )
-
-                    pdf.cell(
-                        35,
-                        8,
-                        "Cliente:"
-                    )
-
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        13
-                    )
-
-                    pdf.multi_cell(
-                        135,
-                        8,
-                        str(row["NOME DO CONSUMIDOR"])
-                    )
-
-                    pdf.set_xy(15,75)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        12
-                    )
-
-                    pdf.cell(
-                        45,
-                        8,
-                        "Produto:"
-                    )
-
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        12
-                    )
-
-                    pdf.multi_cell(
-                        120,
-                        8,
-                        str(row["PRODUTO"])
-                    )
-
-                    pdf.set_xy(15,95)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        12
-                    )
-
-                    pdf.cell(
-                        45,
-                        8,
-                        "Quantidade:"
-                    )
-
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        12
-                    )
-
-                    pdf.cell(
-                        80,
-                        8,
-                        str(row["QUANTIDADE COM DEFEITO"])
-                    )
-
-                    pdf.set_xy(15,110)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        12
-                    )
-
-                    pdf.cell(
-                        45,
-                        8,
-                        "Telefone:"
-                    )
-
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        12
-                    )
-
-                    pdf.cell(
-                        100,
-                        8,
-                        str(row["TELEFONE CONSUMIDOR"])
-                    )
-
-                    pdf.set_xy(15,125)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        12
-                    )
-
-                    pdf.cell(
-                        45,
-                        8,
-                        "Endereco:"
-                    )
-
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        12
-                    )
-
-                    pdf.multi_cell(
-                        130,
-                        8,
-                        str(row["ENDERECO_COMPLETO"])
-                    )
-
-                pdf_bytes = pdf.output(dest='S').encode('latin-1')
-
-                st.download_button(
-                    label="⬇️ DOWNLOAD PDF",
-                    data=pdf_bytes,
-                    file_name=f"coletas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
-                    mime="application/pdf"
                 )
+
+                pdf.ln(4)
+
+            pdf_output = pdf.output(dest="S")
+
+            st.download_button(
+
+                label="⬇️ DOWNLOAD PDF",
+
+                data=bytes(pdf_output),
+
+                file_name=f"coletas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+
+                mime="application/pdf"
+
+            )
 
     except Exception as erro:
 
-        st.error(f"❌ Erro ao processar planilha: {erro}")
+        st.error(f"❌ Erro: {erro}")
