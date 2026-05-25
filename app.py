@@ -61,9 +61,7 @@ def get_base64_image(image_path):
                 img_file.read()
             ).decode()
 
-    except Exception as e:
-
-        st.error(f"Erro carregando logo: {e}")
+    except:
 
         return ""
 
@@ -97,35 +95,6 @@ st.markdown("""
 
 }
 
-/* LOGO */
-
-.logo-container{
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
-    width:100%;
-
-    margin-bottom:10px;
-
-}
-
-.logo-pulsando{
-
-    width:95px;
-    height:auto;
-
-    animation:
-        pulseGlow 2.5s infinite,
-        floating 3s ease-in-out infinite;
-
-    filter:
-        drop-shadow(0 0 12px #00AEEF)
-        drop-shadow(0 0 25px rgba(0,174,239,0.55));
-
-}
-
 /* LOGIN */
 
 .login-box{
@@ -152,7 +121,6 @@ st.markdown("""
     font-size:42px;
     font-weight:800;
     color:white;
-    text-align:center;
 
 }
 
@@ -160,8 +128,6 @@ st.markdown("""
 
     color:#8FA7D8;
     font-size:15px;
-    text-align:center;
-    margin-bottom:20px;
 
 }
 
@@ -248,40 +214,6 @@ st.markdown("""
 
 }
 
-/* ANIMAÇÕES */
-
-@keyframes pulseGlow {
-
-    0%{
-        transform:scale(1);
-    }
-
-    50%{
-        transform:scale(1.05);
-    }
-
-    100%{
-        transform:scale(1);
-    }
-
-}
-
-@keyframes floating {
-
-    0%{
-        transform:translateY(0px);
-    }
-
-    50%{
-        transform:translateY(-5px);
-    }
-
-    100%{
-        transform:translateY(0px);
-    }
-
-}
-
 </style>
 
 """, unsafe_allow_html=True)
@@ -307,11 +239,18 @@ if not st.session_state.logado:
 
             st.markdown(f"""
 
-            <div class="logo-container">
+            <div style="
+                display:flex;
+                justify-content:center;
+                margin-bottom:20px;
+            ">
 
                 <img
                     src="data:image/png;base64,{logo_base64}"
-                    class="logo-pulsando"
+                    style="
+                        width:100px;
+                        height:auto;
+                    "
                 >
 
             </div>
@@ -320,12 +259,16 @@ if not st.session_state.logado:
 
         st.markdown("""
 
-        <div class='titulo'>
-            🚚 COLETA SAC CINI
-        </div>
+        <div style="text-align:center;">
 
-        <div class='subtitulo'>
-            Sistema operacional de coletas SAC
+            <div class='titulo'>
+                🚚 COLETA SAC CINI
+            </div>
+
+            <div class='subtitulo'>
+                Sistema operacional de coletas SAC
+            </div>
+
         </div>
 
         """, unsafe_allow_html=True)
@@ -363,7 +306,7 @@ if not st.session_state.logado:
 # HEADER
 # =========================================================
 
-col1, col2, col3 = st.columns([1,4,1])
+col1, col2, col3 = st.columns([1,5,1])
 
 with col1:
 
@@ -373,11 +316,19 @@ with col1:
 
         st.markdown(f"""
 
-        <div class="logo-container">
+        <div style="
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            margin-top:10px;
+        ">
 
             <img
                 src="data:image/png;base64,{logo_base64}"
-                class="logo-pulsando"
+                style="
+                    width:90px;
+                    height:auto;
+                "
             >
 
         </div>
@@ -386,19 +337,42 @@ with col1:
 
 with col2:
 
-    st.markdown(f"""
+    st.markdown("""
 
-    <div class='titulo'>
-        🚚 COLETA SAC CINI
-    </div>
+    <div style="padding-top:15px;">
 
-    <div class='subtitulo'>
-        Usuário conectado: {st.session_state.usuario}
+        <div style="
+            font-size:42px;
+            font-weight:800;
+            color:white;
+            line-height:1;
+        ">
+
+            🚚 COLETA SAC CINI
+
+        </div>
+
+        <div style="
+            color:#8FA7D8;
+            font-size:15px;
+            margin-top:8px;
+        ">
+
+            Sistema operacional de coletas SAC
+
+        </div>
+
     </div>
 
     """, unsafe_allow_html=True)
 
+    st.caption(
+        f"Usuário conectado: {st.session_state.usuario}"
+    )
+
 with col3:
+
+    st.write("")
 
     if st.button("🚪 SAIR"):
 
@@ -410,7 +384,7 @@ with col3:
 st.divider()
 
 # =========================================================
-# UPLOAD
+# IMPORTAÇÃO
 # =========================================================
 
 arquivo = st.file_uploader(
@@ -435,8 +409,6 @@ class PDF(FPDF):
             30,
             "F"
         )
-
-        # LOGO PDF
 
         caminho_logo = os.path.join(
             os.path.dirname(__file__),
@@ -572,14 +544,14 @@ if arquivo:
 
         )
 
-        # ENDEREÇO COMPLETO
+        # ENDEREÇO
 
         df["ENDERECO_COMPLETO"] = (
 
-            df["ENDEREÇO"].fillna('').astype(str) + ", " +
-            df["BAIRRO"].fillna('').astype(str) + ", " +
-            df["CIDADE"].fillna('').astype(str) + " - " +
-            df["ESTADO"].fillna('').astype(str)
+            df["ENDEREÇO"].fillna("").astype(str) + ", " +
+            df["BAIRRO"].fillna("").astype(str) + ", " +
+            df["CIDADE"].fillna("").astype(str) + " - " +
+            df["ESTADO"].fillna("").astype(str)
 
         )
 
@@ -589,7 +561,14 @@ if arquivo:
 
             "https://www.google.com/maps/search/?api=1&query="
             +
-            df["ENDERECO_COMPLETO"].astype(str).str.replace(" ", "+")
+            (
+                df["ENDERECO_COMPLETO"]
+                .fillna("")
+                .astype(str)
+                .str.replace(" ", "+")
+                .str.replace(",", "")
+                .str.replace("++", "+")
+            )
 
         )
 
@@ -653,7 +632,7 @@ if arquivo:
 
         st.divider()
 
-        # CARDS
+        # ROTAS
 
         st.subheader("🗺️ Rotas de Coleta")
 
@@ -708,25 +687,27 @@ if arquivo:
 
                 </div>
 
-                <br>
+                <div style="margin-top:15px;">
 
-                <a
-                    href="{str(row['GOOGLE MAPS'])}"
-                    target="_blank"
+                    <a
+                        href="{str(row['GOOGLE MAPS'])}"
+                        target="_blank"
+                        style="
+                            background:#00AEEF;
+                            color:white;
+                            padding:10px 16px;
+                            border-radius:10px;
+                            text-decoration:none;
+                            font-weight:700;
+                            display:inline-block;
+                        "
+                    >
 
-                    style="
-                        background:#00AEEF;
-                        color:white;
-                        padding:12px 18px;
-                        border-radius:12px;
-                        text-decoration:none;
-                        font-weight:700;
-                    "
-                >
+                        🗺️ Abrir Google Maps
 
-                    🗺️ Abrir Google Maps
+                    </a>
 
-                </a>
+                </div>
 
             </div>
 
