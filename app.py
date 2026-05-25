@@ -9,18 +9,18 @@ import io
 from dotenv import load_dotenv
 
 # =========================================================
-# CARREGAR .ENV
+# CARREGAR .ENV  →  arquivo senha.env
 # =========================================================
 
-load_dotenv()
+load_dotenv("senha.env")   # ← CORREÇÃO: aponta para senha.env
 
 # =========================================================
 # USUÁRIOS
 # =========================================================
 
 USUARIOS = {
-    "sac01": os.getenv("SAC01", "").strip(),
-    "sac02": os.getenv("SAC02", "").strip(),
+    "sac01":       os.getenv("SAC01",       "").strip(),
+    "sac02":       os.getenv("SAC02",       "").strip(),
     "qualidade01": os.getenv("QUALIDADE01", "").strip(),
     "qualidade02": os.getenv("QUALIDADE02", "").strip(),
 }
@@ -314,32 +314,29 @@ if not st.session_state.logado:
         </div>
         """, unsafe_allow_html=True)
 
-        usuario = st.text_input(
-            "👤 Usuário"
-        )
-
-        senha = st.text_input(
-            "🔒 Senha",
-            type="password"
-        )
+        usuario = st.text_input("👤 Usuário")
+        senha   = st.text_input("🔒 Senha", type="password")
 
         if st.button("🚀 ENTRAR"):
 
-            usuario = usuario.strip().lower()
-            senha = senha.strip()
+            usuario_norm = usuario.strip().lower()
+            senha_norm   = senha.strip()
 
-            if usuario in USUARIOS and USUARIOS[usuario] == senha:
+            if usuario_norm in USUARIOS and USUARIOS[usuario_norm] == senha_norm:
 
-                st.session_state.logado = True
-                st.session_state.usuario = usuario
+                st.session_state.logado  = True
+                st.session_state.usuario = usuario_norm
 
                 st.success("✅ Login realizado com sucesso!")
-
                 st.rerun()
 
             else:
 
-                st.error("❌ Usuário ou senha inválidos!")
+                # Mensagem de erro mais informativa para depuração
+                if usuario_norm not in USUARIOS:
+                    st.error(f"❌ Usuário '{usuario_norm}' não encontrado.")
+                else:
+                    st.error("❌ Senha incorreta.")
 
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -377,7 +374,7 @@ with col3:
 
     if st.button("🚪 SAIR"):
 
-        st.session_state.logado = False
+        st.session_state.logado  = False
         st.session_state.usuario = ""
 
         st.rerun()
@@ -407,7 +404,6 @@ if arquivo:
         )
 
         colunas = [
-
             "Nº",
             "Título",
             "PRODUTO",
@@ -431,19 +427,12 @@ if arquivo:
             "CEP",
             "DATA AGENDADA DE TROCA",
             "PERÍODO PARA RECEBIMENTO DO REPRESENTANTE",
-            "DATA ENTRADA AMOSTRA"
-
+            "DATA ENTRADA AMOSTRA",
         ]
 
-        faltando = [
-
-            c for c in colunas
-            if c not in df.columns
-
-        ]
+        faltando = [c for c in colunas if c not in df.columns]
 
         if faltando:
-
             st.error(f"❌ Colunas não encontradas: {faltando}")
             st.stop()
 
@@ -452,60 +441,43 @@ if arquivo:
         # STATUS
 
         df["STATUS"] = np.where(
-
             df["DATA ENTRADA AMOSTRA"].notna(),
-
             "COLETADO",
-
             "AGUARDANDO"
-
         )
 
-        # ENDEREÇO
+        # ENDEREÇO COMPLETO
 
         df["ENDERECO_COMPLETO"] = (
-
             df["ENDEREÇO"].fillna('').astype(str) + ", " +
-            df["BAIRRO"].fillna('').astype(str) + ", " +
-            df["CIDADE"].fillna('').astype(str) + " - " +
+            df["BAIRRO"].fillna('').astype(str)   + ", " +
+            df["CIDADE"].fillna('').astype(str)   + " - " +
             df["ESTADO"].fillna('').astype(str)
-
         )
 
-        # MAPS
+        # GOOGLE MAPS
 
         df["GOOGLE MAPS"] = (
-
             "https://www.google.com/maps/search/?api=1&query="
-            +
-            df["ENDERECO_COMPLETO"].astype(str).str.replace(" ", "+")
-
+            + df["ENDERECO_COMPLETO"].astype(str).str.replace(" ", "+")
         )
 
-        # KPIS
+        # ── KPIs ──────────────────────────────────────────
 
-        total = len(df)
-
-        aguardando = len(
-            df[df["STATUS"] == "AGUARDANDO"]
-        )
-
-        coletado = len(
-            df[df["STATUS"] == "COLETADO"]
-        )
-
-        cidades = df["CIDADE"].nunique()
+        total      = len(df)
+        aguardando = len(df[df["STATUS"] == "AGUARDANDO"])
+        coletado   = len(df[df["STATUS"] == "COLETADO"])
+        cidades    = df["CIDADE"].nunique()
 
         c1, c2, c3, c4 = st.columns(4)
-
-        c1.metric("TOTAL", total)
+        c1.metric("TOTAL",      total)
         c2.metric("AGUARDANDO", aguardando)
-        c3.metric("COLETADO", coletado)
-        c4.metric("CIDADES", cidades)
+        c3.metric("COLETADO",   coletado)
+        c4.metric("CIDADES",    cidades)
 
         st.divider()
 
-        # FILTROS
+        # ── FILTROS ───────────────────────────────────────
 
         cidades_filtro = st.multiselect(
             "🏙️ Filtrar cidade",
@@ -513,10 +485,7 @@ if arquivo:
         )
 
         if cidades_filtro:
-
-            df = df[
-                df["CIDADE"].astype(str).isin(cidades_filtro)
-            ]
+            df = df[df["CIDADE"].astype(str).isin(cidades_filtro)]
 
         status_filtro = st.multiselect(
             "🚦 Filtrar Status",
@@ -524,76 +493,50 @@ if arquivo:
             default=["AGUARDANDO", "COLETADO"]
         )
 
-        df = df[
-            df["STATUS"].isin(status_filtro)
-        ]
+        df = df[df["STATUS"].isin(status_filtro)]
 
         st.divider()
 
-        # TABELA
+        # ── TABELA ────────────────────────────────────────
 
         st.subheader("📋 Lista de Coletas")
 
-        st.dataframe(
-            df,
-            use_container_width=True,
-            height=500
-        )
+        st.dataframe(df, use_container_width=True, height=500)
 
         st.divider()
 
-        # ROTAS
+        # ── ROTAS ─────────────────────────────────────────
 
         st.subheader("🗺️ Rotas de Coleta")
 
         for i, row in df.iterrows():
 
             status_cor = (
-                "#00FF9D"
-                if row["STATUS"] == "COLETADO"
-                else "#FFD93D"
+                "#00FF9D" if row["STATUS"] == "COLETADO" else "#FFD93D"
             )
 
             st.markdown(f"""
             <div class="card">
 
-            <div style="
-                font-size:18px;
-                font-weight:700;
-                color:white;
-                margin-bottom:8px;
-            ">
+            <div style="font-size:18px;font-weight:700;color:white;margin-bottom:8px;">
                 👤 {str(row['NOME DO CONSUMIDOR'])}
             </div>
 
             <div style="color:#8FA7D8;">
-
                 📦 Produto: {str(row['PRODUTO'])}<br>
                 📍 Cidade: {str(row['CIDADE'])}<br>
                 🏪 Estabelecimento: {str(row['NOME DO ESTABELECIMENTO'])}<br>
                 📞 Telefone: {str(row['TELEFONE CONSUMIDOR'])}<br>
-
             </div>
 
-            <div style="
-                margin-top:10px;
-                font-weight:700;
-                color:{status_cor};
-            ">
+            <div style="margin-top:10px;font-weight:700;color:{status_cor};">
                 🚦 {str(row['STATUS'])}
             </div>
 
             <br>
 
             <a href="{str(row['GOOGLE MAPS'])}" target="_blank"
-            style="
-                background:#00AEEF;
-                color:white;
-                padding:10px 18px;
-                border-radius:10px;
-                text-decoration:none;
-                font-weight:700;
-            ">
+            style="background:#00AEEF;color:white;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:700;">
                 🗺️ Abrir Google Maps
             </a>
 
@@ -602,15 +545,13 @@ if arquivo:
 
         st.divider()
 
-        # PDF
+        # ── PDF ───────────────────────────────────────────
 
         st.subheader("📄 Exportação PDF")
 
         if st.button("📄 GERAR PDF DE PENDÊNCIAS"):
 
-            df_pdf = df[
-                df["STATUS"] == "AGUARDANDO"
-            ]
+            df_pdf = df[df["STATUS"] == "AGUARDANDO"]
 
             if len(df_pdf) == 0:
 
@@ -619,193 +560,62 @@ if arquivo:
             else:
 
                 pdf = FPDF()
-
                 pdf.set_auto_page_break(False)
 
                 for i, row in df_pdf.iterrows():
 
                     pdf.add_page()
 
-                    pdf.set_fill_color(10,16,32)
+                    # cabeçalho
+                    pdf.set_fill_color(10, 16, 32)
+                    pdf.rect(0, 0, 210, 32, 'F')
+                    pdf.set_text_color(255, 255, 255)
+                    pdf.set_font("Arial", "B", 22)
+                    pdf.set_xy(12, 9)
+                    pdf.cell(0, 10, "COLETA SAC CINI")
+                    pdf.set_font("Arial", "", 10)
+                    pdf.set_xy(12, 20)
+                    pdf.cell(0, 10, "Relatorio operacional de coleta")
 
-                    pdf.rect(
-                        0,
-                        0,
-                        210,
-                        32,
-                        'F'
-                    )
+                    # caixa de conteúdo
+                    pdf.set_draw_color(210, 210, 210)
+                    pdf.rect(10, 40, 190, 190)
+                    pdf.set_text_color(0, 0, 0)
 
-                    pdf.set_text_color(255,255,255)
+                    # cliente
+                    pdf.set_xy(15, 50)
+                    pdf.set_font("Arial", "B", 13)
+                    pdf.cell(35, 8, "Cliente:")
+                    pdf.set_font("Arial", "", 13)
+                    pdf.multi_cell(135, 8, str(row["NOME DO CONSUMIDOR"]))
 
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        22
-                    )
+                    # produto
+                    pdf.set_xy(15, 75)
+                    pdf.set_font("Arial", "B", 12)
+                    pdf.cell(45, 8, "Produto:")
+                    pdf.set_font("Arial", "", 12)
+                    pdf.multi_cell(120, 8, str(row["PRODUTO"]))
 
-                    pdf.set_xy(12,9)
+                    # quantidade
+                    pdf.set_xy(15, 95)
+                    pdf.set_font("Arial", "B", 12)
+                    pdf.cell(45, 8, "Quantidade:")
+                    pdf.set_font("Arial", "", 12)
+                    pdf.cell(80, 8, str(row["QUANTIDADE COM DEFEITO"]))
 
-                    pdf.cell(
-                        0,
-                        10,
-                        "COLETA SAC CINI"
-                    )
+                    # telefone
+                    pdf.set_xy(15, 110)
+                    pdf.set_font("Arial", "B", 12)
+                    pdf.cell(45, 8, "Telefone:")
+                    pdf.set_font("Arial", "", 12)
+                    pdf.cell(100, 8, str(row["TELEFONE CONSUMIDOR"]))
 
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        10
-                    )
-
-                    pdf.set_xy(12,20)
-
-                    pdf.cell(
-                        0,
-                        10,
-                        "Relatorio operacional de coleta"
-                    )
-
-                    pdf.set_draw_color(210,210,210)
-
-                    pdf.rect(
-                        10,
-                        40,
-                        190,
-                        190
-                    )
-
-                    pdf.set_text_color(0,0,0)
-
-                    pdf.set_xy(15,50)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        13
-                    )
-
-                    pdf.cell(
-                        35,
-                        8,
-                        "Cliente:"
-                    )
-
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        13
-                    )
-
-                    pdf.multi_cell(
-                        135,
-                        8,
-                        str(row["NOME DO CONSUMIDOR"])
-                    )
-
-                    pdf.set_xy(15,75)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        12
-                    )
-
-                    pdf.cell(
-                        45,
-                        8,
-                        "Produto:"
-                    )
-
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        12
-                    )
-
-                    pdf.multi_cell(
-                        120,
-                        8,
-                        str(row["PRODUTO"])
-                    )
-
-                    pdf.set_xy(15,95)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        12
-                    )
-
-                    pdf.cell(
-                        45,
-                        8,
-                        "Quantidade:"
-                    )
-
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        12
-                    )
-
-                    pdf.cell(
-                        80,
-                        8,
-                        str(row["QUANTIDADE COM DEFEITO"])
-                    )
-
-                    pdf.set_xy(15,110)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        12
-                    )
-
-                    pdf.cell(
-                        45,
-                        8,
-                        "Telefone:"
-                    )
-
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        12
-                    )
-
-                    pdf.cell(
-                        100,
-                        8,
-                        str(row["TELEFONE CONSUMIDOR"])
-                    )
-
-                    pdf.set_xy(15,125)
-
-                    pdf.set_font(
-                        "Arial",
-                        "B",
-                        12
-                    )
-
-                    pdf.cell(
-                        45,
-                        8,
-                        "Endereco:"
-                    )
-
-                    pdf.set_font(
-                        "Arial",
-                        "",
-                        12
-                    )
-
-                    pdf.multi_cell(
-                        130,
-                        8,
-                        str(row["ENDERECO_COMPLETO"])
-                    )
+                    # endereço
+                    pdf.set_xy(15, 125)
+                    pdf.set_font("Arial", "B", 12)
+                    pdf.cell(45, 8, "Endereco:")
+                    pdf.set_font("Arial", "", 12)
+                    pdf.multi_cell(130, 8, str(row["ENDERECO_COMPLETO"]))
 
                 pdf_bytes = pdf.output(dest='S').encode('latin-1')
 
