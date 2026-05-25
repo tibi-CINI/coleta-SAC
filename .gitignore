@@ -1,5 +1,4 @@
-venv/
 senha.env
+venv/
 __pycache__/
 *.pyc
-*.pdf
