@@ -4,24 +4,8 @@ import numpy as np
 from fpdf import FPDF
 from datetime import datetime
 import base64
-import os
 import tempfile
-from dotenv import load_dotenv
-
-# =========================================================
-# CARREGAR SENHAS
-# =========================================================
-
-load_dotenv("senha.env")
-
-USUARIOS = {
-
-    "sac01": str(os.getenv("SAC01", "")).strip(),
-    "sac02": str(os.getenv("SAC02", "")).strip(),
-    "qualidade01": str(os.getenv("QUALIDADE01", "")).strip(),
-    "qualidade02": str(os.getenv("QUALIDADE02", "")).strip()
-
-}
+import os
 
 # =========================================================
 # CONFIG
@@ -32,6 +16,19 @@ st.set_page_config(
     page_icon="🚚",
     layout="wide"
 )
+
+# =========================================================
+# SENHAS STREAMLIT CLOUD
+# =========================================================
+
+USUARIOS = {
+
+    "sac01": st.secrets["SAC01"],
+    "sac02": st.secrets["SAC02"],
+    "qualidade01": st.secrets["QUALIDADE01"],
+    "qualidade02": st.secrets["QUALIDADE02"]
+
+}
 
 # =========================================================
 # SESSION
@@ -369,8 +366,6 @@ with col2:
 
 with col3:
 
-    st.write("")
-
     if st.button("🚪 SAIR"):
 
         st.session_state.logado = False
@@ -468,7 +463,7 @@ if arquivo:
 
         )
 
-        # GOOGLE MAPS
+        # MAPS
 
         df["GOOGLE MAPS"] = (
 
@@ -608,8 +603,6 @@ if arquivo:
 
                 pdf = FPDF()
 
-                pdf.set_auto_page_break(False)
-
                 for i, row in df_pdf.iterrows():
 
                     pdf.add_page()
@@ -643,8 +636,6 @@ ENDEREÇO:
 {row['ENDERECO_COMPLETO']}
                         """
                     )
-
-                # PDF TEMPORÁRIO
 
                 with tempfile.NamedTemporaryFile(
                     delete=False,

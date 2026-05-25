@@ -1,6 +1,15 @@
+# Ambiente virtual
 venv/
+
+# Variáveis secretas
 .env
-senha.env
-senha.txt
+
+# Cache Python
 __pycache__/
 *.pyc
+
+# Streamlit
+.streamlit/
+
+# PDFs gerados
+*.pdf
